@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heal Her Hormones — Symptom Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --rose: #C4796A;
+    --rose-light: #F9EFED;
+    --rose-mid: #E8B4AC;
+    --gold: #C9A84C;
+    --gold-light: #FBF4E3;
+    --cream: #FAF7F4;
+    --deep: #2C2C3E;
+    --muted: #9A8F8A;
+    --light-gold: #E8D5A3;
+    --white: #FFFFFF;
+    --success: #7BAF8E;
+    --danger: #C4796A;
+    --light: #FAF7F4;
+    --dark: #2C2C3E;
+    --gray: #9A8F8A;
+    --teal: #C4796A;
+    --teal-light: #F9EFED;
+    --teal-mid: #E8B4AC;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--light);
+    color: var(--dark);
+    min-height: 100vh;
+  }
+
+  /* AUTH SCREEN */
+  .auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--deep) 0%, #3D2A28 100%);
+    padding: 24px;
+  }
+
+  .auth-card {
+    background: white;
+    border-radius: 24px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .auth-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 8px;
+  }
+
+  .auth-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+
+  .auth-sub {
+    font-size: 13px;
+    color: var(--gray);
+    margin-bottom: 32px;
+  }
+
+  .auth-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .auth-input:focus { border-color: var(--teal); }
+
+  .auth-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 4px;
+  }
+
+  .auth-btn:hover { background: #236260; }
+
+  .auth-error {
+    color: var(--danger);
+    font-size: 13px;
+    margin-top: 10px;
+  }
+
+  /* APP */
+  .app { display: none; }
+
+  header {
+    background: var(--dark);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left { display: flex; flex-direction: column; }
+
+  .header-brand {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.05em;
+  }
+
+  .header-brand span { color: var(--rose-mid); }
+
+  .header-user {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+  }
+
+  .logout-btn {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    background: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .container { max-width: 800px; margin: 0 auto; padding: 20px 16px 80px; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .tab {
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    border: 1.5px solid #E5E7EB;
+    background: white;
+    color: var(--gray);
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+  }
+
+  /* BASELINE CARD */
+  .baseline-card {
+    background: linear-gradient(135deg, var(--deep) 0%, #3D2A28 100%);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    color: white;
+  }
+
+  .baseline-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--light-gold);
+    margin-bottom: 6px;
+  }
+
+  .baseline-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  .baseline-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .baseline-item {
+    background: rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+
+  .baseline-item-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+
+  .baseline-item-value {
+    font-size: 13px;
+    color: white;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  /* SECTION CARD */
+  .section-card {
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1.5px solid #F0F0F0;
+  }
+
+  .section-header {
+    padding: 16px 20px;
+    background: var(--teal-light);
+    border-bottom: 1px solid #D4ECEB;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-icon { font-size: 20px; }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark);
+  }
+
+  .section-body { padding: 16px 20px; }
+
+  /* FIELDS */
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #F5F5F5;
+    gap: 12px;
+  }
+
+  .field-row:last-child { border-bottom: none; }
+
+  .field-label {
+    font-size: 13px;
+    color: var(--dark);
+    font-weight: 500;
+    flex: 1;
+    line-height: 1.4;
+  }
+
+  .field-sub {
+    font-size: 11px;
+    color: var(--gray);
+    margin-top: 2px;
+  }
+
+  .field-input {
+    padding: 8px 12px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    width: 100px;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+
+  .field-input:focus { border-color: var(--teal); }
+
+  .field-input.wide { width: 140px; }
+
+  /* SLIDER */
+  .slider-wrap { display: flex; align-items: center; gap: 8px; }
+
+  .slider {
+    -webkit-appearance: none;
+    width: 120px;
+    height: 4px;
+    border-radius: 2px;
+    background: #E5E7EB;
+    outline: none;
+  }
+
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--teal);
+    cursor: pointer;
+  }
+
+  .slider-val {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--teal);
+    width: 24px;
+    text-align: center;
+  }
+
+  /* YES/NO */
+  .yn-wrap { display: flex; gap: 6px; }
+
+  .yn-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1.5px solid #E5E7EB;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    background: white;
+    color: var(--gray);
+    transition: all 0.15s;
+  }
+
+  .yn-btn.selected-y { background: var(--success); border-color: var(--success); color: white; }
+  .yn-btn.selected-n { background: var(--danger); border-color: var(--danger); color: white; }
+
+  /* TEXTAREA */
+  .notes-area {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 12px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-top: 8px;
+  }
+
+  .notes-area:focus { border-color: var(--teal); }
+
+  /* SUBMIT */
+  .submit-wrap {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    padding: 16px 20px;
+    border-top: 1px solid #F0F0F0;
+    z-index: 50;
+  }
+
+  .submit-btn {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    display: block;
+    padding: 16px;
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .submit-btn:hover { background: #236260; }
+  .submit-btn:disabled { background: #A8D5D3; cursor: not-allowed; }
+
+  /* CHARTS */
+  .chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1.5px solid #F0F0F0;
+  }
+
+  .chart-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 16px;
+  }
+
+  /* CYCLE LOG */
+  .cycle-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .cycle-table th {
+    background: var(--teal);
+    color: white;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 500;
+  }
+
+  .cycle-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #F0F0F0;
+    color: var(--dark);
+  }
+
+  .cycle-table tr:nth-child(even) td { background: var(--teal-light); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--dark);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .week-label {
+    font-size: 12px;
+    color: var(--gray);
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .select-input {
+    padding: 8px 12px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    background: white;
+  }
+
+  .select-input:focus { border-color: var(--teal); }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">Heal Her Hormones</div>
+    <div class="auth-title">Your Tracker</div>
+    <div class="auth-sub">Sign in to access your personalized symptom tracker</div>
+    <input class="auth-input" type="email" id="emailInput" placeholder="Your email address" />
+    <input class="auth-input" type="password" id="passwordInput" placeholder="Password" />
+    <button class="auth-btn" onclick="signIn()">Sign In</button>
+    <div class="auth-error" id="authError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="appScreen">
+  <header>
+    <div class="header-left">
+      <div class="header-brand">heal her <span>hormones</span></div>
+      <div class="header-user" id="userEmail"></div>
+    </div>
+    <button class="logout-btn" onclick="signOut()">Sign out</button>
+  </header>
+
+  <div class="container">
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('tracker', this)">Weekly Tracker</div>
+      <div class="tab" onclick="switchTab('progress', this)">Progress</div>
+      <div class="tab" onclick="switchTab('cycle', this)">Cycle Log</div>
+    </div>
+
+    <!-- TRACKER TAB -->
+    <div id="tab-tracker">
+
+      <!-- BASELINE -->
+      <div class="baseline-card">
+        <div class="baseline-label">Your Baseline — April 2026</div>
+        <div class="baseline-name">Kirsten Reece</div>
+        <div class="baseline-grid">
+          <div class="baseline-item">
+            <div class="baseline-item-label">Weight</div>
+            <div class="baseline-item-value">230 lbs</div>
+          </div>
+          <div class="baseline-item">
+            <div class="baseline-item-label">Last Cycle</div>
+            <div class="baseline-item-value">57 days (Feb–Apr)</div>
+          </div>
+          <div class="baseline-item">
+            <div class="baseline-item-label">Avg Cycle</div>
+            <div class="baseline-item-value">50–52 days</div>
+          </div>
+          <div class="baseline-item">
+            <div class="baseline-item-label">Clothing</div>
+            <div class="baseline-item-value">L → M transition</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="week-label" id="weekLabel"></div>
+
+      <!-- ENERGY & SLEEP -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">⚡</div>
+          <div class="section-title">Energy & Sleep</div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div><div class="field-label">Morning Energy</div><div class="field-sub">1 = exhausted · 10 = great</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="5" oninput="updateSlider(this)" data-field="morning_energy">
+              <div class="slider-val">5</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Sleep Quality</div><div class="field-sub">1 = terrible · 10 = great</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="5" oninput="updateSlider(this)" data-field="sleep_quality">
+              <div class="slider-val">5</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Hours Slept</div></div>
+            <input class="field-input" type="number" step="0.5" placeholder="7.5" data-field="hours_slept">
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Apple Watch Sleep Score</div><div class="field-sub">If available</div></div>
+            <input class="field-input" type="number" placeholder="85" data-field="watch_sleep_score">
+          </div>
+        </div>
+      </div>
+
+      <!-- DIGESTION -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">🌿</div>
+          <div class="section-title">Digestion & Gut</div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div><div class="field-label">Bloating</div><div class="field-sub">1 = none · 10 = severe</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="1" oninput="updateSlider(this)" data-field="bloating">
+              <div class="slider-val">1</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Nausea</div><div class="field-sub">1 = none · 10 = severe</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="1" oninput="updateSlider(this)" data-field="nausea">
+              <div class="slider-val">1</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Appetite / Hunger</div><div class="field-sub">1 = no appetite · 10 = normal</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="5" oninput="updateSlider(this)" data-field="appetite">
+              <div class="slider-val">5</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Food Repulsion</div><div class="field-sub">1 = none · 10 = severe</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="1" oninput="updateSlider(this)" data-field="food_repulsion">
+              <div class="slider-val">1</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Bowel Movements</div><div class="field-sub">Number per day</div></div>
+            <input class="field-input" type="number" placeholder="1" data-field="bowel_movements">
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Stool Consistency</div><div class="field-sub">Bristol scale: 1 = watery · 7 = solid</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="7" value="4" oninput="updateSlider(this)" data-field="stool_consistency">
+              <div class="slider-val">4</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HORMONES & CYCLE -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">🌙</div>
+          <div class="section-title">Hormones & Cycle</div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div><div class="field-label">Cycle Day</div><div class="field-sub">Day 1 = first day of period</div></div>
+            <input class="field-input" type="number" placeholder="1" data-field="cycle_day">
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Period Started Today?</div></div>
+            <div class="yn-wrap">
+              <button class="yn-btn" onclick="toggleYN(this, 'period_started', 'Y')">Y</button>
+              <button class="yn-btn" onclick="toggleYN(this, 'period_started', 'N')">N</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Flow</div></div>
+            <select class="select-input" data-field="flow">
+              <option value="">Select</option>
+              <option>Light</option>
+              <option>Medium</option>
+              <option>Heavy</option>
+              <option>None</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Cramps</div><div class="field-sub">1 = none · 10 = severe</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="1" oninput="updateSlider(this)" data-field="cramps">
+              <div class="slider-val">1</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Mood / Irritability</div><div class="field-sub">1 = low · 10 = severe</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="5" oninput="updateSlider(this)" data-field="mood">
+              <div class="slider-val">5</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Anxiety</div><div class="field-sub">1 = none · 10 = severe</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="1" oninput="updateSlider(this)" data-field="anxiety">
+              <div class="slider-val">1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BODY & PHYSICAL -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">🌡️</div>
+          <div class="section-title">Body & Physical</div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div><div class="field-label">Body Temperature Feel</div></div>
+            <select class="select-input" data-field="body_temp">
+              <option value="">Select</option>
+              <option>Cold</option>
+              <option>Normal</option>
+              <option>Hot</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Hot Flashes / Sweating</div></div>
+            <div class="yn-wrap">
+              <button class="yn-btn" onclick="toggleYN(this, 'hot_flashes', 'Y')">Y</button>
+              <button class="yn-btn" onclick="toggleYN(this, 'hot_flashes', 'N')">N</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Joint / Muscle Aches</div><div class="field-sub">1 = none · 10 = severe</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="1" oninput="updateSlider(this)" data-field="joint_aches">
+              <div class="slider-val">1</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Brain Fog</div><div class="field-sub">1 = none · 10 = severe</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="1" oninput="updateSlider(this)" data-field="brain_fog">
+              <div class="slider-val">1</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Headache</div><div class="field-sub">1 = none · 10 = severe</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="1" oninput="updateSlider(this)" data-field="headache">
+              <div class="slider-val">1</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Overall Fatigue</div><div class="field-sub">1 = none · 10 = severe</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="1" oninput="updateSlider(this)" data-field="fatigue">
+              <div class="slider-val">1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MOVEMENT -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">🏃</div>
+          <div class="section-title">Movement & Steps</div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div><div class="field-label">Steps Today</div><div class="field-sub">Apple Watch daily count</div></div>
+            <input class="field-input wide" type="number" placeholder="8000" data-field="steps">
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Workout Today?</div></div>
+            <div class="yn-wrap">
+              <button class="yn-btn" onclick="toggleYN(this, 'workout', 'Y')">Y</button>
+              <button class="yn-btn" onclick="toggleYN(this, 'workout', 'N')">N</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Exercise Performance</div><div class="field-sub">1 = poor · 10 = strong</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="5" oninput="updateSlider(this)" data-field="exercise_performance">
+              <div class="slider-val">5</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NUTRITION -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">🥗</div>
+          <div class="section-title">Nutrition</div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div><div class="field-label">Protein Hit Target?</div><div class="field-sub">Target: 130–140g</div></div>
+            <div class="yn-wrap">
+              <button class="yn-btn" onclick="toggleYN(this, 'protein_target', 'Y')">Y</button>
+              <button class="yn-btn" onclick="toggleYN(this, 'protein_target', 'N')">N</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Bone Broth / Collagen</div></div>
+            <div class="yn-wrap">
+              <button class="yn-btn" onclick="toggleYN(this, 'bone_broth', 'Y')">Y</button>
+              <button class="yn-btn" onclick="toggleYN(this, 'bone_broth', 'N')">N</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Polyphenol Foods</div><div class="field-sub">Berries, pomegranate, green tea</div></div>
+            <div class="yn-wrap">
+              <button class="yn-btn" onclick="toggleYN(this, 'polyphenols', 'Y')">Y</button>
+              <button class="yn-btn" onclick="toggleYN(this, 'polyphenols', 'N')">N</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Sugar Cravings</div><div class="field-sub">1 = none · 10 = intense</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="1" oninput="updateSlider(this)" data-field="sugar_cravings">
+              <div class="slider-val">1</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Hunger Stability</div><div class="field-sub">1 = unstable · 10 = steady all day</div></div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" min="1" max="10" value="5" oninput="updateSlider(this)" data-field="hunger_stability">
+              <div class="slider-val">5</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUPPLEMENTS -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">💊</div>
+          <div class="section-title">Supplements</div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div><div class="field-label">All Supplements Taken?</div></div>
+            <div class="yn-wrap">
+              <button class="yn-btn" onclick="toggleYN(this, 'supplements_taken', 'Y')">Y</button>
+              <button class="yn-btn" onclick="toggleYN(this, 'supplements_taken', 'N')">N</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Metformin Taken?</div></div>
+            <div class="yn-wrap">
+              <button class="yn-btn" onclick="toggleYN(this, 'metformin', 'Y')">Y</button>
+              <button class="yn-btn" onclick="toggleYN(this, 'metformin', 'N')">N</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-label">Any Side Effects?</div></div>
+            <input class="field-input wide" type="text" placeholder="Describe if yes" data-field="side_effects">
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">✨</div>
+          <div class="section-title">Weekly Reflection</div>
+        </div>
+        <div class="section-body">
+          <div class="field-label">Weekly Win</div>
+          <div class="field-sub">Something that felt better or different this week — no matter how small</div>
+          <textarea class="notes-area" data-field="weekly_win" placeholder="e.g. Leggings stayed up on my hike..."></textarea>
+          <div class="field-label" style="margin-top:16px">Additional Notes</div>
+          <textarea class="notes-area" data-field="notes" placeholder="Anything else worth capturing..."></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PROGRESS TAB -->
+    <div id="tab-progress" style="display:none">
+      <div class="chart-card">
+        <div class="chart-title">Energy & Sleep Trends</div>
+        <canvas id="energyChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Symptom Overview</div>
+        <canvas id="radarChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Digestion Trends</div>
+        <canvas id="digestionChart"></canvas>
+      </div>
+    </div>
+
+    <!-- CYCLE TAB -->
+    <div id="tab-cycle" style="display:none">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">🌙</div>
+          <div class="section-title">Cycle Log</div>
+        </div>
+        <div class="section-body" style="overflow-x:auto">
+          <table class="cycle-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Length</th>
+                <th>Period</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Oct 2025</td><td>Nov 2025</td><td>45 days</td><td>—</td><td>Baseline at start of protocol</td></tr>
+              <tr><td>2</td><td>Nov 2025</td><td>Feb 2026</td><td>72 days</td><td>—</td><td>Outlier — extended cycle</td></tr>
+              <tr><td>3</td><td>Feb 2026</td><td>Apr 2026</td><td>57 days</td><td>4 days</td><td>Shortening trend — positive signal ✓</td></tr>
+              <tr><td>4</td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td>5</td><td></td><td></td><td></td><td></td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SUBMIT (only show on tracker tab) -->
+  <div class="submit-wrap" id="submitWrap">
+    <button class="submit-btn" onclick="submitEntry()" id="submitBtn">Save Today's Entry</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://cqbeatunyrpgdubeehcp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_vxyimUe4uHVK7Y5s7ABo9w_Kvemy07R';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1dbfTN8qCQcXLZSa7zsApTTpMRklC6gdW9gS_BMkisTI/edit';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let formData = {};
+let ynState = {};
+
+// AUTH
+async function signIn() {
+  const email = document.getElementById('emailInput').value;
+  const password = document.getElementById('passwordInput').value;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    document.getElementById('authError').textContent = error.message;
+  } else {
+    currentUser = data.user;
+    showApp();
+  }
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'block';
+  document.getElementById('userEmail').textContent = currentUser.email;
+  setWeekLabel();
+}
+
+// Check existing session
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    currentUser = session.user;
+    showApp();
+  }
+});
+
+function setWeekLabel() {
+  const today = new Date();
+  const day = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  document.getElementById('weekLabel').textContent = 'Week of ' + fmt(monday) + ' — ' + fmt(sunday);
+}
+
+// SLIDERS
+function updateSlider(el) {
+  el.nextElementSibling.textContent = el.value;
+  formData[el.dataset.field] = el.value;
+}
+
+// YES/NO
+function toggleYN(btn, field, val) {
+  var wrap = btn.parentElement;
+  wrap.querySelectorAll('.yn-btn').forEach(function(b) {
+    b.classList.remove('selected-y', 'selected-n');
+  });
+  btn.classList.add(val === 'Y' ? 'selected-y' : 'selected-n');
+  ynState[field] = val;
+}
+
+// TABS
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('tab-tracker').style.display = tab === 'tracker' ? 'block' : 'none';
+  document.getElementById('tab-progress').style.display = tab === 'progress' ? 'block' : 'none';
+  document.getElementById('tab-cycle').style.display = tab === 'cycle' ? 'block' : 'none';
+  document.getElementById('submitWrap').style.display = tab === 'tracker' ? 'block' : 'none';
+  if (tab === 'progress') loadCharts();
+}
+
+// COLLECT FORM DATA
+function collectFormData() {
+  var data = { user_id: currentUser.id, email: currentUser.email, date: new Date().toISOString().split('T')[0] };
+  document.querySelectorAll('[data-field]').forEach(function(el) {
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+      data[el.dataset.field] = el.value;
+    }
+  });
+  document.querySelectorAll('.slider[data-field]').forEach(function(el) {
+    data[el.dataset.field] = el.value;
+  });
+  Object.assign(data, ynState);
+  return data;
+}
+
+// SUBMIT
+async function submitEntry() {
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  var data = collectFormData();
+
+  // Save to Supabase
+  var { error } = await sb.from('symptom_entries').insert([data]);
+
+  if (error) {
+    showToast('Error saving — ' + error.message);
+  } else {
+    showToast('✓ Entry saved successfully');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Save Today\'s Entry';
+}
+
+// CHARTS
+async function loadCharts() {
+  var { data, error } = await sb.from('symptom_entries')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('date', { ascending: true })
+    .limit(12);
+
+  if (error || !data || data.length === 0) {
+    // Show sample data if no entries yet
+    data = [
+      { date: 'Week 1', morning_energy: 4, sleep_quality: 3, fatigue: 8, bloating: 7, nausea: 6, brain_fog: 7, anxiety: 6, mood: 7 },
+      { date: 'Week 2', morning_energy: 5, sleep_quality: 4, fatigue: 7, bloating: 6, nausea: 5, brain_fog: 6, anxiety: 5, mood: 6 },
+      { date: 'Week 3', morning_energy: 5, sleep_quality: 5, fatigue: 6, bloating: 5, nausea: 4, brain_fog: 5, anxiety: 5, mood: 5 },
+    ];
+  }
+
+  var labels = data.map(function(d) { return d.date; });
+
+  // Energy chart
+  var ctx1 = document.getElementById('energyChart').getContext('2d');
+  if (window.energyChartInst) window.energyChartInst.destroy();
+  window.energyChartInst = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Morning Energy', data: data.map(function(d) { return d.morning_energy; }), borderColor: '#C4796A', backgroundColor: 'rgba(196,121,106,0.1)', tension: 0.4, fill: true },
+        { label: 'Sleep Quality', data: data.map(function(d) { return d.sleep_quality; }), borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.1)', tension: 0.4, fill: true },
+      ]
+    },
+    options: { responsive: true, scales: { y: { min: 1, max: 10 } }, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Radar chart
+  var ctx2 = document.getElementById('radarChart').getContext('2d');
+  if (window.radarChartInst) window.radarChartInst.destroy();
+  var latest = data[data.length - 1];
+  var baseline = data[0];
+  window.radarChartInst = new Chart(ctx2, {
+    type: 'radar',
+    data: {
+      labels: ['Energy', 'Sleep', 'Mood', 'Digestion', 'Fatigue', 'Brain Fog', 'Anxiety'],
+      datasets: [
+        { label: 'Baseline', data: [baseline.morning_energy, baseline.sleep_quality, 10 - baseline.mood, 10 - baseline.bloating, 10 - baseline.fatigue, 10 - baseline.brain_fog, 10 - baseline.anxiety], borderColor: '#E8B4AC', backgroundColor: 'rgba(232,180,172,0.2)' },
+        { label: 'Latest', data: [latest.morning_energy, latest.sleep_quality, 10 - latest.mood, 10 - latest.bloating, 10 - latest.fatigue, 10 - latest.brain_fog, 10 - latest.anxiety], borderColor: '#C4796A', backgroundColor: 'rgba(196,121,106,0.2)' },
+      ]
+    },
+    options: { responsive: true, scales: { r: { min: 0, max: 10 } }, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Digestion chart
+  var ctx3 = document.getElementById('digestionChart').getContext('2d');
+  if (window.digestionChartInst) window.digestionChartInst.destroy();
+  window.digestionChartInst = new Chart(ctx3, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Bloating', data: data.map(function(d) { return d.bloating; }), borderColor: '#E87070', tension: 0.4 },
+        { label: 'Nausea', data: data.map(function(d) { return d.nausea; }), borderColor: '#C9A84C', tension: 0.4 },
+      ]
+    },
+    options: { responsive: true, scales: { y: { min: 1, max: 10 } }, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+// TOAST
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+</script>
+</body>
+</html>
